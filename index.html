@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全選手別結果概要 - 関西トラックフェスタ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Tailwind CSSのカスタム設定を定義
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // ケイリン.jp風のテーマカラーを定義
+                        'keirin-bg-light': '#F8F8F8',   /* 非常に薄いグレー (背景) */
+                        'keirin-card-bg': '#FFFFFF',    /* カードの背景は白 */
+                        'keirin-border': '#E0E0E0',     /* 薄いグレーのボーダー */
+                        'keirin-primary': '#0A246A',    /* 濃いネイビーブルー (ヘッダー、主要テキスト) */
+                        'keirin-accent': '#D91E18',     /* 赤 (アクセント、強調) */
+                        'keirin-text-dark': '#333333',  /* 濃いグレー (一般的なテキスト) */
+                        'keirin-text-light': '#666666', /* 薄いグレー (補助的なテキスト) */
+                        'keirin-filter-bg': '#F0F0F0',  /* フィルターエリアの背景 */
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 基本のフォントと背景色 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--keirin-bg-light); /* TailwindのカスタムカラーをCSS変数で参照 */
+            color: var(--keirin-text-dark);
+        }
+
+        /* メインコンテナのスタイル */
+        .main-container {
+            background-color: var(--keirin-card-bg);
+            border: 1px solid var(--keirin-border);
+        }
+
+        /* 選手カードのスタイル */
+        .athlete-card {
+            background-color: var(--keirin-card-bg); /* カードの背景は白 */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* 影を控えめに */
+            transition: transform 0.2s ease-in-out;
+            border: 1px solid var(--keirin-border); /* 薄いグレーのボーダー */
+        }
+        .athlete-card:hover {
+            transform: translateY(-3px); /* ホバー時の浮き上がりを控えめに */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.12); /* ホバー時の影を強調 */
+        }
+
+        /* 結果項目のスタイル */
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: var(--keirin-filter-bg); /* フィルター背景色と同じ */
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); /* 内側の影で立体感を */
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* テーブルの基本スタイル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            overflow: hidden; /* 角丸を適用するために必要 */
+        }
+        th, td {
+            border: 1px solid var(--keirin-border); /* 薄いグレーの罫線 */
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: var(--keirin-primary); /* ヘッダー背景色を濃いネイビーに */
+            color: white; /* ヘッダー文字色を白に */
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: var(--keirin-filter-bg); /* 偶数行の背景色 */
+        }
+        tr:nth-child(odd) {
+            background-color: var(--keirin-card-bg); /* 奇数行の背景色 */
+        }
+
+        /* フィルターのドロップダウン */
+        select {
+            border-color: var(--keirin-border);
+            background-color: var(--keirin-card-bg);
+            color: var(--keirin-text-dark);
+        }
+        select:focus {
+            outline: none;
+            border-color: var(--keirin-primary); /* フォーカス時にプライマリカラーのボーダー */
+            box-shadow: 0 0 0 2px rgba(10, 36, 106, 0.2); /* フォーカス時のシャドウ */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 lg:p-10 bg-keirin-bg-light text-keirin-text-dark">
+    <div class="max-w-5xl mx-auto p-6 sm:p-8 md:p-10 rounded-xl shadow-xl main-container">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-keirin-primary mb-8">関西トラックフェスタ 全選手別結果</h1>
+
+        <div class="mb-8 p-4 bg-keirin-filter-bg rounded-lg shadow-inner flex flex-wrap gap-4 justify-center border border-keirin-border">
+            <div class="w-full sm:w-auto flex-grow">
+                <label for="athlete-filter" class="block text-sm font-medium text-keirin-text-dark mb-1">選手名で絞り込み:</label>
+                <select id="athlete-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border rounded-md">
+                    <option value="">全ての選手</option>
+                </select>
+            </div>
+
+            <div class="w-full sm:w-auto flex-grow">
+                <label for="event-filter" class="block text-sm font-medium text-keirin-text-dark mb-1">競技名で絞り込み:</label>
+                <select id="event-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border rounded-md">
+                    <option value="">全ての競技</option>
+                </select>
+            </div>
+
+            <div class="w-full sm:w-auto flex-grow">
+                <label for="competition-filter" class="block text-sm font-medium text-keirin-text-dark mb-1">大会名で絞り込み:</label>
+                <select id="competition-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border rounded-md">
+                    <option value="">全ての大会</option>
+                    <option value="第1戦">第1戦</option>
+                    <option value="第2戦">第2戦</option>
+                </select>
+            </div>
+
+            <div class="w-full sm:w-auto flex-grow">
+                <label for="category-filter" class="block text-sm font-medium text-keirin-text-dark mb-1">カテゴリで絞り込み:</label>
+                <select id="category-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border rounded-md">
+                    <option value="">全てのカテゴリ</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="results-container" class="flex justify-center hidden">
+            </div>
+        <p id="results-message" class="text-center text-keirin-text-dark col-span-full mt-4">選手名を選択するか、競技・大会・カテゴリで絞り込んでください。</p>
+
+        <div id="keirin-stats-section" class="bg-keirin-card-bg p-6 rounded-xl shadow-md mt-8 border border-keirin-border hidden">
+            <h2 class="text-2xl font-bold text-keirin-primary mb-4">ケイリン統計情報</h2>
+            <p class="text-sm text-keirin-text-light mb-4">※これらの統計情報はデータに基づいて自動計算されます。</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>氏名</th>
+                            <th>出走回数</th>
+                            <th>勝率</th>
+                            <th>連対率</th>
+                            <th>3連対率</th>
+                            <th>優出率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="keirin-stats-body">
+                        </tbody>
+                </table>
+            </div>
+            <p id="keirin-stats-message" class="text-center text-keirin-text-dark mt-4 hidden">選手名を選択するか、競技・大会・カテゴリで絞り込んでください。</p>
+        </div>
+    </div>
+
+    <script>
+        // 全選手のデータをここに格納します
+        const allAthleteData = [
+            {
+                name: "田村 一暉",
+                furigana: "たむら かずき",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "10.77秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "10.75秒", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:06.00", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:05.77", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "11:24", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "10.75秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "10.7秒", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "TP", time: "4:35.58", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:27.54", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "28点", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "3", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "稲吉 一生",
+                furigana: "いなよし いっせい",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.95秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:10.52", rank: "17位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.72", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "11.71", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE2", time: "11.9秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:27.54", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "21点", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "4", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "石居 靖隆",
+                furigana: "いしい やすたか",
+                team: "天狗党",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "12.16秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "200mFTT", time: "12.37秒", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "1KmTT", time: "1:17.25", rank: "3位", competition: "第1戦", class: "TM" },
+                    { event: "1KmTT", time: "1:15.76", rank: "2位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "13.71", rank: "1位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "2位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "13.95秒", rank: "1位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "14.1秒", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "TS", time: "1:42.29", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "", competition: "第1戦", class: "TM" } // 修正: ランクを空にしました
+                ]
+            },
+            {
+                name: "新井 秀人",
+                furigana: "あらい ひでと",
+                team: "CWASPアタリマエダ",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "12.02秒", rank: "1位", competition: "第1戦", class: "TM" },
+                    { event: "1KmTT", time: "1:12.50", rank: "1位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "（タイム記載なし）", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "5.21.78", rank: "1", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "山崎 智久",
+                furigana: "やまさき ともひさ",
+                team: "和歌山バイチャクラブ",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.44秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "200mFTT", time: "12.75秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "1KmTT", time: "1:15.65", rank: "2位", competition: "第1戦", class: "TM" },
+                    { event: "1KmTT", time: "1:16.56", rank: "3位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "13.5", rank: "1位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "13:72", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "3位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "6位", competition: "第2戦", class: "TM" },
+                    { event: "TP", time: "5:30.76", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "0点", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "今村 有亨",
+                furigana: "いまむら ありみち",
+                team: "PRT KOSEKI金生堂",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.72秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "200mFTT", time: "12.67秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "39.37秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "500mTT", time: "38.97秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "3位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "13.36", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "5位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "TS", time: "1:42.29", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "17点", rank: "2位", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "3", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "宮崎 善彦",
+                furigana: "みやざき よしひこ",
+                team: "岩井商会レーシング",
+                area: "大阪府",
+                results: [
+                    { event: "1KmTT", time: "1:17.35", rank: "57位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 R", time: "15.07秒", rank: "1位", competition: "第2戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "28点", rank: "1位", competition: "第2戦", class: "R" }
+                ]
+            },
+            {
+                name: "末吉 陽生",
+                furigana: "すえよし はるき",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.54秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "11.52秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.52", rank: "10位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.26", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "12点", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "1", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "鴨下 佳朋",
+                furigana: "かもした よしとも",
+                team: "天狗党",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "10.94秒", rank: "3位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:07.04", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "11.46", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "11.46秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.97", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "原田 應佑",
+                furigana: "はらだ おうすけ",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.53秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.95", rank: "7位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.41", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "12:25", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "4位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "TP", time: "4:27.54", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "12点", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "2", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "小松 楽",
+                furigana: "こまつ がく",
+                team: "アームズレーシング",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "12.17秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.82", rank: "34位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE2", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "4", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "仁井田 技斗",
+                furigana: "にいだ あやと",
+                team: "TOYOHASHI",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "11.96秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:14.83", rank: "44位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "12.54", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE2", time: "12.54秒", rank: "1位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "今井 章雄",
+                furigana: "いまい あきお",
+                team: "CWASP アタリマエダ",
+                area: "岡山",
+                results: [
+                    { event: "200mFTT", time: "11.95秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.35", rank: "24位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE2", time: "", rank: "5位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "1:24.34", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "5:14.49", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "樫尾 一知",
+                furigana: "かしお いっち",
+                team: "Team ZERO UNO FRONTIER",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "13.00秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.87", rank: "62位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE2", time: "", rank: "6位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "15", competition: "第1戦", class: "TE" } // Corrected rank based on PDF
+                ]
+            },
+            {
+                name: "西川 清憲",
+                furigana: "にしかわ きよのり",
+                team: "天狗党 京都支部",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.75秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "200mFTT", time: "12.72秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "40.07秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "500mTT", time: "39.47秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "2位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "2位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "2位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "2位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "5点", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "TP", time: "5:30.76", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "2", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "田中 裕士",
+                furigana: "たなか ゆうじ",
+                team: "京都サイクルクラブ",
+                area: "京都府",
+                results: [
+                    { event: "1KmTT", time: "", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "2位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "13.28", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "4位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "", rank: "7位", competition: "第2戦", class: "TM" },
+                    { event: "TP", time: "5:30.76", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "7", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "安田 忠勲",
+                furigana: "やすだ ただいさ",
+                team: "Rapha Cycling Club",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "12.71秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "200mFTT", time: "12.85秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "1KmTT", time: "1:18.18", rank: "4位", competition: "第1戦", class: "TM" },
+                    { event: "1KmTT", time: "1:17.32", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "3位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "2位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "6位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン決勝 TM", time: "", rank: "3位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "9点", rank: "3位", competition: "第2戦", class: "TM" },
+                    { event: "TP", time: "5:30.76", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "篠田 智秀",
+                furigana: "しのだ ともひで",
+                team: "",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "13.99秒", rank: "", competition: "第1戦", class: "R" },
+                    { event: "1KmTT", time: "1:24.11", rank: "4位", competition: "第1戦", class: "R" },
+                    { event: "ケイリン決勝 R", time: "15.069秒", rank: "1位", competition: "第1戦", class: "R" },
+                    { event: "ケイリン決勝 R", time: "", rank: "2位", competition: "第2戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "13点", rank: "3位", competition: "第2戦", class: "R" },
+                    { event: "スクラッチ決勝 R", time: "", rank: "4", competition: "第1戦", class: "R" }
+                ]
+            },
+            {
+                name: "前川 裕之",
+                furigana: "まえがわ ひろゆき",
+                team: "HGSBT Cycle Team",
+                area: "京都府",
+                results: [
+                    { event: "1KmTT", time: "1:22.91", rank: "3位", competition: "第1戦", class: "R" },
+                    { event: "1KmTT", time: "1:21.99", rank: "", competition: "第2戦", class: "R" },
+                    { event: "ケイリン決勝 R", time: "", rank: "3位", competition: "第2戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "19点", rank: "2位", competition: "第2戦", class: "R" },
+                    { event: "スクラッチ決勝 R", time: "", rank: "3", competition: "第1戦", class: "R" }
+                ]
+            },
+            {
+                name: "小島 真音",
+                furigana: "こじま まのん",
+                team: "FU-JIN RACING",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "22.68秒", rank: "", competition: "第1戦", class: "RU12" },
+                    { event: "200mFTT", time: "20.12秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "500mTT", time: "58.78秒", rank: "", competition: "第1戦", class: "RU12" },
+                    { event: "500mTT", time: "59.71秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "ケイリン決勝 R", time: "", rank: "2位", competition: "第1戦", class: "RU12" },
+                    { event: "ポイント決勝 Road", time: "", rank: "", competition: "第2戦", class: "RU12" }
+                ]
+            },
+            {
+                name: "小島 蒼士",
+                furigana: "こじま そうし",
+                team: "FU-JIN RACING",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "15.97秒", rank: "", competition: "第1戦", class: "RU12" },
+                    { event: "500mTT", time: "47.81秒", rank: "", competition: "第1戦", class: "RU12" },
+                    { event: "500mTT", time: "48.16秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "1KmTT", time: "1:40.82", rank: "1位", competition: "第1戦", class: "RU12" },
+                    { event: "1KmTT", time: "1:43.00", rank: "34位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "7位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "佐野 真麻",
+                furigana: "さの まあさ",
+                team: "ORCA CYCLING TEAM",
+                area: "愛知県",
+                results: [
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "ケイリン決勝 R", time: "", rank: "3位", competition: "第1戦", class: "RU12" },
+                    { event: "ポイント決勝 Road", time: "", rank: "", competition: "第2戦", class: "RU12" }
+                ]
+            },
+            {
+                name: "皿屋 豊",
+                furigana: "さらや ゆたか",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "10.79秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "佐野 唯月",
+                furigana: "さの いづき",
+                team: "京都精華学園",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.62秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.13", rank: "36位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:26.91", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "清水 快晟",
+                furigana: "しみず かいせい",
+                team: "岐阜第一",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "11.28秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.46", rank: "5位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "永井 琉生",
+                furigana: "ナガイ ルイ",
+                team: "岐阜第一高校",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "11.37秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.27", rank: "3位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "岡村 郁弥",
+                furigana: "おかむら いくみ",
+                team: "CWASPアタリマエダ",
+                area: "岡山",
+                results: [
+                    { event: "200mFTT", time: "11.65秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.81", rank: "11位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "1:24.34", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "5:14.49", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "7", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "犬童 海翔",
+                furigana: "いぬどう かいと",
+                team: "中京大学",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "11.66秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.18", rank: "29位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.56", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "坂部 守春",
+                furigana: "さかべ すばる",
+                team: "中京大学",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "11.66秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "7位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.56", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "志田 海翔",
+                furigana: "しだ かいと",
+                team: "岐阜第一高校",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "11.55秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:10.58", rank: "18位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "小西 晴己",
+                furigana: "こにし はるき",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "11.38秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.31", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "西村 誓恩",
+                furigana: "にしむら なぎ",
+                team: "松山工業高校",
+                area: "愛媛県",
+                results: [
+                    { event: "200mFTT", time: "12.37秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.27", rank: "31位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "3位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "10", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "渡辺 一気",
+                furigana: "わたなべ いっき",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.92秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.01", rank: "8位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "6位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:35.58", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "6", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "渡邉 玄冬",
+                furigana: "わたなべ げんと",
+                team: "同志社大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.89秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.99", rank: "41位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "5:01.14", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "樋口 源",
+                furigana: "ひぐち げん",
+                team: "明治国際医療大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.74秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.45", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "12", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "尾澤 瑶成",
+                furigana: "おざわ ようせい",
+                team: "明治国際医療大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.49秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.34", rank: "23位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "11.85秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "5位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.45", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "林 大翔",
+                furigana: "はやし ひろと",
+                team: "高知大学",
+                area: "高知県",
+                results: [
+                    { event: "200mFTT", time: "11.14秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.55", rank: "6位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "3位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "井上 颯人",
+                furigana: "いのうえ はやと",
+                team: "名古屋たちばな高等学校",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "11.57秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.23", rank: "37位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "11", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "河地 拓巳",
+                furigana: "かわち たくみ",
+                team: "R's Cycle",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.67秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.34秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.74", rank: "53位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:14.79", rank: "17位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "山本 龍汰",
+                furigana: "やまもと りゅうた",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "11.71秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "11.84秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.47", rank: "39位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.75", rank: "15位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "小林 柊友",
+                furigana: "こばやし ひゅう",
+                team: "岐阜第一高校",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "12.18秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.26", rank: "30位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "森田 叶夢",
+                furigana: "もりた とあ",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.39秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:10.11", rank: "14位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "12.59秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:27.54", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "5", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "神谷 遥人",
+                furigana: "かみや はると",
+                team: "T-GUP/ぴっとレーシングチーム",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "12.07秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.28", rank: "22位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.97", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "前田 堅一朗",
+                furigana: "まえだ けんいちろう",
+                team: "CWASPアタリマエダ",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.12秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "11.95秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.53", rank: "26位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.47", rank: "11位", competition: "第2戦", class: "TE" },
+                    { event: "TS", time: "1:24.34", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "大河原 誠春",
+                furigana: "おおかわら せいしゅん",
+                team: "中京大学",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "12.36秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.11", rank: "48位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "5位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:32.46", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "12", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "大本 龍征",
+                furigana: "おおもと りゅうせい",
+                team: "松山工業高校",
+                area: "愛媛県",
+                results: [
+                    { event: "200mFTT", time: "11.50秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "500mTT", time: "35.55秒", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "5位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "7.39.11", rank: "1", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "中村 隼大",
+                furigana: "ナカムラ ハヤタ",
+                team: "MINOURA大垣レーシング",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "12.31秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.98", rank: "12位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "中畑 新之介",
+                furigana: "なかはた しんのすけ",
+                team: "",
+                area: "和歌山県",
+                results: [
+                    { event: "200mFTT", time: "11.84秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.06秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.71", rank: "27位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.79", rank: "8位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "3位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン特選 TE1", time: "12.34秒", rank: "1位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "藤本 天",
+                furigana: "ふじもと てん",
+                team: "",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.30秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.08", rank: "35位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "廣谷 聖那",
+                furigana: "ひろたに せな",
+                team: "堺高校自転車競技部",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "13.15秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:21.17", rank: "68位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "5位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "澤井 俊佑",
+                furigana: "さわい しゅんすけ",
+                team: "島根大学",
+                area: "島根県",
+                results: [
+                    { event: "200mFTT", time: "12.35秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.15秒", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:10.38", rank: "15位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.35", rank: "7位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "6位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "伊東 敬翔",
+                furigana: "いとう けいと",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "12.47秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.52", rank: "50位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:23.96", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "岡田 孝平",
+                furigana: "おかだ こうへい",
+                team: "Adachi Racing",
+                area: "岡山県",
+                results: [
+                    { event: "200mFTT", time: "12.79秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:17.18", rank: "56位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "7位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:00.52", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "下井 樹",
+                furigana: "しもい たつき",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "12.33秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.47秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:15.85", rank: "47位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:15.69", rank: "19位", competition: "第2戦", class: "TE" },
+                    { event: "TS", time: "1:23.96", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "三屋田 健介",
+                furigana: "みやた けんすけ",
+                team: "",
+                area: "徳島県",
+                results: [
+                    { event: "200mFTT", time: "12.91秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.93", rank: "55位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "村島 悠太",
+                furigana: "むらしま ゆうた",
+                team: "瀬田工業高校",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "12.53秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:15.18", rank: "46位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "5位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "5", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "端 祭季",
+                furigana: "はし さいき",
+                team: "大阪産業大学",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "12.50秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:14.28", rank: "42位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "竹内 悠剛",
+                furigana: "たけうち ゆうご",
+                team: "岐阜第一高等学校",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "11.86秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "500mTT", time: "36.32秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:11.44", rank: "25位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "天野 裕太",
+                furigana: "あまの ゆうた",
+                team: "同志社大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.06秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.07", rank: "28位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "5:01.14", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "梅本 聖也",
+                furigana: "うめもと せいや",
+                team: "",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "11.76秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.38", rank: "32位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "5:14.49", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "服部 孝亮",
+                furigana: "はっとり こうすけ",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "12.27秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.22秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.27", rank: "38位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.34", rank: "13位", competition: "第2戦", class: "TE" },
+                    { event: "TS", time: "1:21.31", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "岡嶋 大洋",
+                furigana: "おかじま たいよう",
+                team: "",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.75秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.94秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:14.99", rank: "45位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:19.57", rank: "25位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "山本 溜牙",
+                furigana: "やまもと りょうが",
+                team: "京都産業大学",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "11.79秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "12.20秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:10.85", rank: "20位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.02", rank: "9位", competition: "第2戦", class: "TE" },
+                    { event: "TP", time: "4:27.54", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "20点", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "7", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "森泉 駿",
+                furigana: "もりいずみ しゅん",
+                team: "T-GUP Racing Team",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "11.96秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "7.09.61", rank: "1位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:21.97", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE3", time: "7.09.61", rank: "1", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "杉本 才虎",
+                furigana: "すぎもと さいこ",
+                team: "Adachi レーシング",
+                area: "岡山県",
+                results: [
+                    { event: "200mFTT", time: "13.24秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.71", rank: "61位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "6位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:00.52", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "本郷 琉真",
+                furigana: "ほんごう りょうま",
+                team: "足立レーシング",
+                area: "岡山県",
+                results: [
+                    { event: "200mFTT", time: "13.94秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:20.71", rank: "67位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "伊東 優来",
+                furigana: "いとう ゆら",
+                team: "岐阜第一高等学校",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "13.98秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "500mTT", time: "", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:23.12", rank: "73位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "岸田 新大",
+                furigana: "きしだ あらた",
+                team: "京都精華学園",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.56秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "13.37秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:21.91", rank: "71位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:20.12", rank: "27位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "8位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "栗山 匠",
+                furigana: "くりやま たくみ",
+                team: "向陽高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.12秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.63", rank: "52位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "4位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "山口 成美",
+                furigana: "やまぐち なるみ",
+                team: "京都精華学園高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.68秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE3", time: "", rank: "", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "西村 たま子",
+                furigana: "にしむら たまこ",
+                team: "岐阜第一",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "13.82秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:22.60", rank: "72位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "平井 鼎三",
+                furigana: "ひらい ていぞう",
+                team: "京都精華学園高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.05秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.34", rank: "58位", competition: "第1戦", class: "TE" },
+                    { event: "TS", time: "1:26.91", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "7", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "柴田 太治",
+                furigana: "しばた たいじ",
+                team: "高松市サイクルスポーツ少年団",
+                area: "香川県",
+                results: [
+                    { event: "200mFTT", time: "13.55秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "13.50秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:19.91", rank: "64位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:21.90", rank: "29位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "5位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "7位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "", rank: "5位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "小林 史弥",
+                furigana: "こばやし ふみや",
+                team: "",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.68秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.45", rank: "59位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "4位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "3", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "平尾 香乃",
+                furigana: "ひらお かの",
+                team: "",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "13.20秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "13.38秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:21.40", rank: "69位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:21.47", rank: "28位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "平木 寛大",
+                furigana: "ひらき かんた",
+                team: "岐阜第一高等学校",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "13.27秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.47", rank: "60位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "伊東 景祐",
+                furigana: "いとう けいすけ",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.52秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:08.39", rank: "4位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:10.52", rank: "6位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "6位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "6位", competition: "第2戦", class: "TE" },
+                    { event: "TP", time: "4:39.53", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE1", time: "", rank: "9", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "永尾 陽仁",
+                furigana: "ながお はるひと",
+                team: "鴨沂高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "11.74秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.29", rank: "9位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:56.09", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "橘 蓮",
+                furigana: "たちばな れん",
+                team: "鴨沂高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.41秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "2位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:56.09", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE3", time: "", rank: "2", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "四方 克実",
+                furigana: "しかた かつみ",
+                team: "鴨沂高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.34秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "TP", time: "4:56.09", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE3", time: "", rank: "4", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "日隱 龍斗",
+                furigana: "ひがくれ りょうと",
+                team: "鴨沂高校",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.25秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.46", rank: "49位", competition: "第1戦", class: "TE" },
+                    { event: "TP", time: "4:56.09", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "12", competition: "第1戦", class: "TE" } // Duplicate rank, check if it's the same person or different event
+                ]
+            },
+            {
+                name: "三宅 大地",
+                furigana: "みやけ だいち",
+                team: "足立レーシング",
+                area: "岡山県",
+                results: [
+                    { event: "200mFTT", time: "13.23秒", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:20.50", rank: "66位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "4位", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "山崎 博士",
+                furigana: "やまざき ひろし",
+                team: "",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.20秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "40.31秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "5位", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "舛井 幹雄",
+                furigana: "ますい もとお",
+                team: "m&m cycle factory",
+                area: "三重県",
+                results: [
+                    { event: "1KmTT", time: "1:11.78", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "21点", rank: "1位", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "上岡 諭一",
+                furigana: "うえおか ゆういち",
+                team: "和歌山バイチャクラブ",
+                area: "大阪府",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "4位", competition: "第1戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "-20点", rank: "7位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "", rank: "7位", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "6", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "寺本 達哉",
+                furigana: "てらもと たつや",
+                team: "Rapha Cycling Club",
+                area: "兵庫県",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "6位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "", competition: "第1戦", class: "TM" } // Rank not explicitly given for final
+                ]
+            },
+            {
+                name: "池部 哲夫",
+                furigana: "いけべ てつお",
+                team: "FUKADAまじりんぐ",
+                area: "滋賀県",
+                results: [
+                    { event: "ポイント決勝 TM", time: "", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "土田 誠二",
+                furigana: "つちだ せいじ",
+                team: "つうばいつう",
+                area: "大阪府",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "4位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "14.34秒", rank: "1位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "-16点", rank: "6位", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "5", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "服部 和成",
+                furigana: "はっとり かずなり",
+                team: "PRT KOSEKI 金生堂",
+                area: "京都府",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "TS", time: "1:42.29", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "8", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "田中 まさき",
+                furigana: "たなか まさき",
+                team: "PRT KOSEKI 金生堂",
+                area: "京都府",
+                results: [
+                    { event: "1KmTT", time: "", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "", competition: "第1戦", class: "TM" } // Rank not explicitly given for final
+                ]
+            },
+            {
+                name: "鈴木 ただし",
+                furigana: "すずき ただし",
+                team: "Tomotoshi cycle 岸和田",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.30秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "500mTT", time: "40.02秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "500mTT", time: "40.64秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "6位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "3位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "", rank: "6位", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "坪井 伸夫",
+                furigana: "つぼい のぶお",
+                team: "LAKE HAMANA RC",
+                area: "静岡県",
+                results: [
+                    { event: "200mFTT", time: "13.88秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "200mFTT", time: "14.17秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "1KmTT", time: "1:25.29", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "1KmTT", time: "1:23.68", rank: "7位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "5位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "3位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "", rank: "3位", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "田中 紀尋",
+                furigana: "たなか としひろ",
+                team: "teamAxis",
+                area: "大阪府",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "7位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "橋本 博水",
+                furigana: "はしもと はくすい",
+                team: "",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "15.52秒", rank: "", competition: "第2戦", class: "R" },
+                    { event: "1KmTT", time: "1:30.11", rank: "", competition: "第2戦", class: "R" },
+                    { event: "ケイリン決勝 R", time: "", rank: "", competition: "第2戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "", rank: "", competition: "第2戦", class: "R" }
+                ]
+            },
+            {
+                name: "畑中 誠",
+                furigana: "はたなか まこと",
+                team: "",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "14.21秒", rank: "", competition: "第1戦", class: "R" },
+                    { event: "1KmTT", time: "1:20.90", rank: "2位", competition: "第1戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "", rank: "2位", competition: "第2戦", class: "R" },
+                    { event: "スクラッチ決勝 R", time: "", rank: "2", competition: "第1戦", class: "R" }
+                ]
+            },
+            {
+                name: "古市 孝太朗",
+                furigana: "フルイチ コウタロウ",
+                team: "同志社大学",
+                area: "京都府",
+                results: [
+                    { event: "500mTT", time: "39.13秒", rank: "", competition: "第1戦", class: "R" },
+                    { event: "1KmTT", time: "1:16.19", rank: "1位", competition: "第2戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "", rank: "1位", competition: "第2戦", class: "R" },
+                    { event: "スクラッチ決勝 R", time: "", rank: "1", competition: "第1戦", class: "R" }
+                ]
+            },
+            {
+                name: "長谷部 瑠太",
+                furigana: "はせべ るた",
+                team: "Limited team 846",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第1戦", class: "RU15" },
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "RU15" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "RU15" },
+                    { event: "ポイント決勝 Road", time: "", rank: "", competition: "第2戦", class: "RU15" }
+                ]
+            },
+            {
+                name: "白井 秀侑",
+                furigana: "しらい ひでゆき",
+                team: "HGSBT Cycle Team",
+                area: "大阪府",
+                results: [
+                    { event: "500mTT", time: "", rank: "", competition: "第1戦", class: "R" },
+                    { event: "200mFTT", time: "14.71秒", rank: "", competition: "第2戦", class: "R" },
+                    { event: "500mTT", time: "44.26秒", rank: "", competition: "第2戦", class: "R" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第1戦", class: "R" },
+                    { event: "1KmTT", time: "1:23.46", rank: "", competition: "第2戦", class: "R" }
+                ]
+            },
+            {
+                name: "加藤 満洋",
+                furigana: "かとう みつひろ",
+                team: "天狗党 京都支部",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "14.78秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "500mTT", time: "44.16秒", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "7位", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "渡部 春雅",
+                furigana: "わたべ かすが",
+                team: "",
+                area: "神奈川",
+                results: [
+                    { event: "500mTT", time: "", rank: "", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "5位", competition: "第1戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "5位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "12.66秒", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE3", time: "", rank: "", competition: "第1戦", class: "TE" } // Rank not explicitly given
+                ]
+            },
+            {
+                name: "杉浦 輝基",
+                furigana: "すぎうら てるもと",
+                team: "デンソーエレクトロニクス",
+                area: "愛知県",
+                results: [
+                    { event: "500mTT", time: "", rank: "", competition: "第1戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "", competition: "第1戦", class: "TM" } // Rank not explicitly given
+                ]
+            },
+            {
+                name: "多田 司",
+                furigana: "ただ つかさ",
+                team: "",
+                area: "大阪府",
+                results: [
+                    { event: "500mTT", time: "", rank: "", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "新子 学",
+                furigana: "あたらし まなぶ",
+                team: "くいだおれレーシング",
+                area: "大阪府",
+                results: [
+                    { event: "500mTT (第1戦)", time: "", rank: "", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "中津 顕",
+                furigana: "なかつ あきら",
+                team: "WP KYOTO",
+                area: "滋賀県",
+                results: [
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ポイント決勝 TM", time: "", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "4", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "曽田 大智",
+                furigana: "そた たいち",
+                team: "同志社大学自転車競技部",
+                area: "大阪府",
+                results: [
+                    { event: "500mTT", time: "42.69秒", rank: "", competition: "第1戦", class: "R" },
+                    { event: "1KmTT", time: "1:27.38", rank: "5位", competition: "第1戦", class: "R" },
+                    { event: "ポイント決勝 Road", time: "", rank: "5位", competition: "第2戦", class: "R" },
+                    { event: "スクラッチ決勝 R", time: "", rank: "5", competition: "第1戦", class: "R" }
+                ]
+            },
+            {
+                name: "梅田 弘之",
+                furigana: "うめだ ひろゆき",
+                team: "",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "13.35秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "41.22秒", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "廣井 浩一",
+                furigana: "ひろい こういち",
+                team: "caro sport",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "13.99秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "39.45秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "3位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "", rank: "8位", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "廣瀬 公智",
+                furigana: "ひろせ こうじ",
+                team: "大垣ピストンズ",
+                area: "岐阜県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "長濱 孝一",
+                furigana: "ながはま こういち",
+                team: "Team Fux",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "14.38秒", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "1KmTT", time: "1:23.02", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "5位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "", rank: "2位", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "早川 敦",
+                furigana: "はやかわ あつし",
+                team: "神戸高専自転車競技部",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "R" },
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "R" }
+                ]
+            },
+            {
+                name: "新見 功",
+                furigana: "にいみ いさお",
+                team: "日本ろう自転車競技協会",
+                area: "鳥取",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "R" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "R" }
+                ]
+            },
+            {
+                name: "西金 佐智夫",
+                furigana: "にしかね さちお",
+                team: "",
+                area: "福井県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "R" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "R" }
+                ]
+            },
+            {
+                name: "橋本 晃博",
+                furigana: "はしもと あきひろ",
+                team: "sommet 84 moto",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "21.94秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "500mTT", time: "50.45秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "1KmTT", time: "1:42.72", rank: "", competition: "第2戦", class: "RU12" }
+                ]
+            },
+            {
+                name: "橋本 尚寛",
+                furigana: "はしもと たかひろ",
+                team: "sommet 84 moto",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "23.29秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "500mTT", time: "58.63秒", rank: "", competition: "第2戦", class: "RU12" },
+                    { event: "1KmTT", time: "2:00.05", rank: "", competition: "第2戦", class: "RU12" }
+                ]
+            },
+            {
+                name: "橋本 恵子",
+                furigana: "はしもと あやこ",
+                team: "sommet 84 moto",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "23.14秒", rank: "", competition: "第2戦", class: "RU15" },
+                    { event: "500mTT", time: "1:00.70", rank: "", competition: "第2戦", class: "RU15" },
+                    { event: "1KmTT", time: "1:58.60", rank: "", competition: "第2戦", class: "RU15" }
+                ]
+            },
+            {
+                name: "倉谷 侠俐",
+                furigana: "くらたに かいり",
+                team: "名古屋たちばな高校",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "升谷 太一",
+                furigana: "ますたに たいち",
+                team: "はむはむ",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.04秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "吉川 雄之",
+                furigana: "よしかわ かつゆき",
+                team: "",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "井上 拓海",
+                furigana: "いのうえ たくみ",
+                team: "京都産業大学",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "12.43秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.30", rank: "12位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン特選 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "黒田 拓杜",
+                furigana: "くろだ たくと",
+                team: "シマノドリンキング",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "11.89秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:13.62", rank: "14位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "12.54", rank: "1位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "菅原 友幹",
+                furigana: "すがわら ゆうき",
+                team: "シマノドリンキング",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "永尾 祐一郎",
+                furigana: "ながお ゆういちろう",
+                team: "大阪産業大学",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.22秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.40", rank: "10位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "西田 大悟",
+                furigana: "にしだ だいご",
+                team: "大阪立命館高校",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.19秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:19.68", rank: "26位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン特選 TE1", time: "", rank: "2位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "姫野 正志",
+                furigana: "ひめの まさし",
+                team: "TeamZERO UNO FRONTIER",
+                area: "兵庫県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "山崎 颯大",
+                furigana: "やまざき そうた",
+                team: "立命館大学",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "11.59秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:09.77", rank: "5位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "2位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン決勝 TE1", time: "", rank: "5位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "倉谷 希輝",
+                furigana: "くらたに きら",
+                team: "名古屋たちばな高校",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "武西 憲進",
+                furigana: "たけにし けんしん",
+                team: "松山工業高校 自転車競技部",
+                area: "愛媛県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "辻 陽希",
+                furigana: "つじ はるき",
+                team: "",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE2", time: "", rank: "6位", competition: "第1戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "11", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "中野 雄太",
+                furigana: "なかの ゆうた",
+                team: "Team ZERO UNO FRONTIER",
+                area: "滋賀県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "二階堂 尚志",
+                furigana: "にかいどう たかし",
+                team: "VC VELOCE",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "13.02秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:12.72", rank: "33位", competition: "第1戦", class: "TE" },
+                    { event: "1KmTT", time: "1:14.37", rank: "16位", competition: "第2戦", class: "TE" },
+                    { event: "スクラッチ予選 TE2", time: "", rank: "16", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "西村 海澄",
+                furigana: "にしむら かいと",
+                team: "大阪産業大学",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "12.90秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.76", rank: "21位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "藤本 悠雅",
+                furigana: "ふじもと ゆうが",
+                team: "紀北工業",
+                area: "和歌山県",
+                results: [
+                    { event: "200mFTT", time: "12.68秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:16.50", rank: "20位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン特選 TE1", time: "", rank: "3位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "木村 誠",
+                furigana: "きむら まこと",
+                team: "久居農林高校",
+                area: "三重県",
+                results: [
+                    { event: "200mFTT", time: "13.29秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:18.76", rank: "22位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "5位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "能口 和久",
+                furigana: "のぐち かずひさ",
+                team: "TTM",
+                area: "石川県",
+                results: [
+                    { event: "200mFTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "500mTT", time: "", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "", rank: "", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "丸山 祐生",
+                furigana: "まるやま ゆうき",
+                team: "名古屋高校自転車競技部",
+                area: "愛知県",
+                results: [
+                    { event: "200mFTT", time: "12.37秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:14.87", rank: "18位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "紫原 斗輝",
+                furigana: "しはら とき",
+                team: "京都精華学園",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "13.95秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:22.37", rank: "30位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "6位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "", rank: "4位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "的羽 蓮",
+                furigana: "まとば れん",
+                team: "和歌山県立紀北工業高等学校",
+                area: "和歌山県",
+                results: [
+                    { event: "200mFTT", time: "15.33秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:30.56", rank: "32位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "7位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "", rank: "6位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "宇野 悠誠",
+                furigana: "うの ゆうせい",
+                team: "",
+                area: "京都府",
+                results: [
+                    { event: "200mFTT", time: "15.75秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:35.88", rank: "33位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "信吉 莉玖",
+                furigana: "のぶよし りく",
+                team: "大阪産業大学",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "15.32秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:19.37", rank: "23位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "林 慶真",
+                furigana: "はやし けいしん",
+                team: "大阪産業大学",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "13.08秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "ポイント決勝 TE", time: "7点", rank: "7位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "高橋 正幸",
+                furigana: "たかはし まさゆき",
+                team: "m&m cycle factory",
+                area: "三重県",
+                results: [
+                    { event: "1KmTT", time: "1:23.22", rank: "6位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "4位", competition: "第2戦", class: "TM" },
+                    { event: "ケイリン予選 TM", time: "", rank: "4位", competition: "第1戦", class: "TM" },
+                    { event: "ケイリン特選 TM", time: "", rank: "4位", competition: "第2戦", class: "TM" }
+                ]
+            },
+            {
+                name: "三浦 颯馬",
+                furigana: "みうら そうま",
+                team: "大阪産業大学",
+                area: "大阪府",
+                results: [
+                    { event: "200mFTT", time: "13.54秒", rank: "", competition: "第2戦", class: "TE" },
+                    { event: "1KmTT", time: "1:19.54", rank: "24位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "3位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン特選 TE1", time: "", rank: "5位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "宮本 奏穂",
+                furigana: "みやもと かなほ",
+                team: "Team スクアドラ",
+                area: "大阪府",
+                results: [
+                    { event: "1KmTT", time: "1:22.76", rank: "31位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン予選 TE1", time: "", rank: "6位", competition: "第2戦", class: "TE" },
+                    { event: "ケイリン選抜 TE1", time: "", rank: "3位", competition: "第2戦", class: "TE" }
+                ]
+            },
+            {
+                name: "高田 謙一",
+                furigana: "たかだ けんいち",
+                team: "",
+                area: "",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "DNS", competition: "第1戦", class: "TM" }
+                ]
+            },
+            {
+                name: "藤田 季之",
+                furigana: "ふじた としゆき",
+                team: "TOMOTOSHI CYCLE 岸和田",
+                area: "",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "5位", competition: "第1戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "", competition: "第1戦", class: "TM" } // Rank not explicitly given
+                ]
+            },
+            {
+                name: "波多野 正大",
+                furigana: "はたの まさひろ",
+                team: "",
+                area: "",
+                results: [
+                    { event: "ケイリン予選 TM", time: "", rank: "8位", competition: "第1戦", class: "TM" },
+                    { event: "スクラッチ決勝 TM", time: "", rank: "", competition: "第1戦", class: "TM" } // Rank not explicitly given
+                ]
+            },
+            // 新規追加選手（スクラッチ結果のみ）
+            {
+                name: "小山 颯太",
+                furigana: "こやま そうた",
+                team: "向陽高校",
+                area: "京都府",
+                results: [
+                    { event: "スクラッチ予選 TE2", time: "", rank: "2", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "西尾 啓臣",
+                furigana: "にしお けいしん",
+                team: "明治国際医療大学",
+                area: "大阪府",
+                results: [
+                    { event: "スクラッチ予選 TE2", time: "", rank: "6", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "和田 拓人",
+                furigana: "わだ たくと",
+                team: "瀬田工業高校",
+                area: "滋賀県",
+                results: [
+                    { event: "スクラッチ予選 TE2", time: "", rank: "8", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "田中 惣大",
+                furigana: "たなか そうた",
+                team: "向陽高校",
+                area: "京都府",
+                results: [
+                    { event: "スクラッチ予選 TE2", time: "", rank: "9", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "和氣 丈一朗",
+                furigana: "わけ じょういちろう",
+                team: "同志社大学",
+                area: "",
+                results: [
+                    { event: "スクラッチ予選 TE3", time: "", rank: "3", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "手賀 眞行",
+                furigana: "てが まさゆき",
+                team: "坂井高校",
+                area: "",
+                results: [
+                    { event: "スクラッチ予選 TE3", time: "", rank: "8", competition: "第1戦", class: "TE" }
+                ]
+            },
+            {
+                name: "内堀 仁美",
+                furigana: "うちぼり ひとみ",
+                team: "TEAM ENGINE11 JAPAN K-CRIT",
+                area: "滋賀県",
+                results: [
+                    { event: "スクラッチ予選 TE3", time: "", rank: "5", competition: "第1戦", class: "TE" }
+                ]
+            }
+        ];
+
+        const resultsContainer = document.getElementById('results-container');
+        const athleteFilter = document.getElementById('athlete-filter');
+        const eventFilter = document.getElementById('event-filter');
+        const competitionFilter = document.getElementById('competition-filter');
+        const categoryFilter = document.getElementById('category-filter'); // 新しいカテゴリフィルター
+        const keirinStatsBody = document.getElementById('keirin-stats-body');
+        const keirinStatsSection = document.getElementById('keirin-stats-section');
+        const keirinStatsMessage = document.getElementById('keirin-stats-message');
+        const resultsMessage = document.getElementById('results-message');
+
+        // Define the custom sorting order for events
+        const eventOrder = [
+            "200mFTT",
+            "500mTT",
+            "1KmTT",
+            "ケイリン", // This will match any event containing "ケイリン"
+            "スクラッチ", // This will match any event containing "スクラッチ"
+            "ポイントレース", // This will match any event containing "ポイント決勝"
+            "TP", // Team Pursuit
+            "TS" // Team Sprint
+        ];
+
+        /**
+         * Custom comparison function for sorting results.
+         * Sorts by event type according to `eventOrder`, then by competition (第1戦 before 第2戦).
+         * @param {object} a - First result object.
+         * @param {object} b - Second result object.
+         * @returns {number} Comparison result.
+         */
+        function sortResults(a, b) {
+            let eventA = a.event;
+            let eventB = b.event;
+
+            // Normalize event names for sorting
+            if (eventA.includes('ケイリン')) eventA = 'ケイリン';
+            if (eventB.includes('ケイリン')) eventB = 'ケイリン';
+            if (eventA.includes('ポイント決勝')) eventA = 'ポイントレース';
+            if (eventB.includes('ポイント決勝')) eventB = 'ポイントレース';
+            if (eventA.includes('500M')) eventA = '500mTT';
+            if (eventB.includes('500M')) eventB = '500mTT';
+            if (eventA.includes('スクラッチ')) eventA = 'スクラッチ';
+            if (eventB.includes('スクラッチ')) eventB = 'スクラッチ';
+
+
+            const orderA = eventOrder.indexOf(eventA);
+            const orderB = eventOrder.indexOf(eventB);
+
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+
+            // If event types are the same, sort by competition
+            const compOrder = { "第1戦": 1, "第2戦": 2 };
+            return compOrder[a.competition] - compOrder[b.competition];
+        }
+
+        /**
+         * Checks if any filter is currently active.
+         * @returns {boolean} True if any filter is selected, false otherwise.
+         */
+        function isAnyFilterActive() {
+            return athleteFilter.value !== '' || eventFilter.value !== '' || competitionFilter.value !== '' || categoryFilter.value !== '';
+        }
+
+        /**
+         * Calculates Keirin statistics for a given athlete.
+         * @param {object} athlete - The athlete object from allAthleteData.
+         * @returns {object} An object containing calculated Keirin statistics.
+         */
+        function calculateKeirinStats(athlete) {
+            let totalKeirinRaces = 0;
+            let wins = 0;
+            let top2 = 0;
+            let top3 = 0;
+            let finalAppearances = 0; // ケイリン決勝への出場回数
+
+            athlete.results.forEach(result => {
+                // ケイリン予選、ケイリン決勝、ケイリン特選、ケイリン選抜をケイリンイベントとしてカウント
+                const isKeirinEvent = result.event.includes('ケイリン');
+
+                if (isKeirinEvent) {
+                    totalKeirinRaces++; // ケイリン関連の全ての出走をカウント
+
+                    // 勝率、連対率、3連対率に含める
+                    const rankNum = parseInt(result.rank); // "1位" -> 1, "2位" -> 2
+                    if (!isNaN(rankNum)) {
+                        if (rankNum === 1) {
+                            wins++;
+                        }
+                        if (rankNum <= 2) {
+                            top2++;
+                        }
+                        if (rankNum <= 3) {
+                            top3++;
+                        }
+                    }
+                }
+
+                // 優出率の計算: ケイリン決勝またはケイリン特選への出場回数のみをカウント
+                if (result.event.includes('ケイリン決勝') || result.event.includes('ケイリン特選')) {
+                    finalAppearances++;
+                }
+            });
+
+            // 各率を計算 (分母が0の場合は"0.0%"とする)
+            const winRate = totalKeirinRaces > 0 ? ((wins / totalKeirinRaces) * 100).toFixed(1) + '%' : "0.0%";
+            const top2Rate = totalKeirinRaces > 0 ? ((top2 / totalKeirinRaces) * 100).toFixed(1) + '%' : "0.0%";
+            const top3Rate = totalKeirinRaces > 0 ? ((top3 / totalKeirinRaces) * 100).toFixed(1) + '%' : "0.0%";
+            // 優出率の計算: 決勝進出回数 / ケイリン関連の全出走回数
+            const finalRate = totalKeirinRaces > 0 ? ((finalAppearances / totalKeirinRaces) * 100).toFixed(1) + '%' : "0.0%";
+
+            return {
+                name: athlete.name,
+                races: totalKeirinRaces, // ケイリン関連の出走回数のみを反映
+                winRate: winRate,
+                top2Rate: top2Rate,
+                top3Rate: top3Rate,
+                finalRate: finalRate
+            };
+        }
+
+        /**
+         * Renders the Keirin statistics table.
+         * @param {string} [filterName=''] - Optional athlete name to filter by.
+         */
+        function renderKeirinStats(filterName = '') {
+            keirinStatsBody.innerHTML = ''; // Clear previous results
+
+            // 選手が選択されていない、または他のフィルターがアクティブでない場合は非表示
+            if (!filterName || (!isAnyFilterActive() && filterName === '')) {
+                keirinStatsSection.classList.add('hidden');
+                keirinStatsMessage.classList.remove('hidden');
+                return;
+            } else {
+                keirinStatsSection.classList.remove('hidden');
+                keirinStatsMessage.classList.add('hidden');
+            }
+
+            let athletesToDisplay = [];
+
+            if (filterName) {
+                // 特定の選手が選択された場合、その選手のみを対象とする
+                const athlete = allAthleteData.find(a => a.name === filterName);
+                if (athlete) {
+                    athletesToDisplay.push(athlete);
+                }
+            } else {
+                // 「全ての選手」が選択された場合、ケイリン関連の出走がある全ての選手を対象とする
+                // ただし、カテゴリフィルターが適用されている場合は、そのカテゴリに属する選手のみを対象とする
+                const selectedCategory = categoryFilter.value;
+                athletesToDisplay = allAthleteData.filter(athlete =>
+                    athlete.results.some(result =>
+                        result.event.includes('ケイリン') &&
+                        (selectedCategory ? result.class === selectedCategory : true)
+                    )
+                );
+            }
+
+            const allKeirinStats = [];
+            athletesToDisplay.forEach(athlete => {
+                const stats = calculateKeirinStats(athlete);
+                // ケイリン関連の出走が1回以上ある選手のみ表示
+                if (stats.races > 0) {
+                    allKeirinStats.push(stats);
+                }
+            });
+
+            // 選手名でソート
+            allKeirinStats.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+
+            if (allKeirinStats.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" class="text-center text-keirin-text-dark">ケイリン統計情報がありません。</td>`;
+                keirinStatsBody.appendChild(row);
+            } else {
+                allKeirinStats.forEach(stats => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${stats.name}</td>
+                        <td>${stats.races}</td>
+                        <td>${stats.winRate}</td>
+                        <td>${stats.top2Rate}</td>
+                        <td>${stats.top3Rate}</td>
+                        <td>${stats.finalRate}</td>
+                    `;
+                    keirinStatsBody.appendChild(row);
+                });
+            }
+        }
+
+        /**
+         * Creates an athlete card element.
+         * @param {object} athlete - The athlete data.
+         * @param {Array} displayResults - The filtered results to display for this athlete.
+         * @returns {HTMLElement} The created athlete card div.
+         */
+        function createAthleteCard(athlete, displayResults) {
+            const athleteCard = document.createElement('div');
+            // 単一選手表示に最適化するため、最大幅と中央寄せのクラスを追加
+            athleteCard.className = 'athlete-card w-full max-w-lg mx-auto';
+
+            // 選手のカテゴリを収集
+            const categories = new Set();
+            athlete.results.forEach(result => {
+                if (result.class) {
+                    categories.add(result.class);
+                }
+            });
+            const categoryText = categories.size > 0 ? Array.from(categories).sort().join(', ') : '不明';
+
+            // Sort displayResults according to the defined order
+            displayResults.sort(sortResults);
+
+            athleteCard.innerHTML = `
+                <h2 class="text-xl sm:text-2xl font-bold text-keirin-primary mb-4">${athlete.name} (${athlete.furigana})</h2>
+                <p class="text-keirin-text-dark mb-2">カテゴリ: ${categoryText}</p>
+                <p class="text-keirin-text-dark mb-2">所属: ${athlete.team || '不明'}</p>
+                <p class="text-keirin-text-dark mb-4">府県: ${athlete.area || '不明'}</p>
+                <h3 class="text-lg font-semibold text-keirin-text-dark mb-2">結果:</h3>
+                <ul class="space-y-2">
+                    ${displayResults.length > 0 ?
+                        displayResults.map(result => `
+                            <li class="result-item">
+                                <span>${result.event} (${result.competition})</span>
+                                <span class="font-bold text-keirin-text-dark">${result.time} ${result.rank ? `(${result.rank})` : ''}</span>
+                            </li>
+                        `).join('')
+                        : '<li class="text-sm text-keirin-text-light">該当する結果はありません。</li>'
+                    }
+                </ul>
+            `;
+            return athleteCard;
+        }
+
+        /**
+         * Populates the athlete, event, and category filter dropdowns.
+         * @param {string} [currentSelectedCategory=''] - The currently selected category to filter athletes.
+         */
+        function populateFilters(currentSelectedCategory = '') {
+            const uniqueAthletes = {};
+            const eventNames = new Set();
+            const categoryNames = new Set();
+
+            // カテゴリ名と競技名を全てのデータから収集
+            allAthleteData.forEach(athlete => {
+                athlete.results.forEach(result => {
+                    if (result.class) {
+                        categoryNames.add(result.class);
+                    }
+                    let normalizedEvent = result.event;
+                    if (normalizedEvent.includes('ケイリン')) {
+                        normalizedEvent = 'ケイリン';
+                    } else if (normalizedEvent.includes('ポイント決勝')) {
+                        normalizedEvent = 'ポイントレース';
+                    } else if (normalizedEvent.includes('500mTT') || normalizedEvent.includes('500M')) {
+                        normalizedEvent = '500mTT';
+                    } else if (normalizedEvent.includes('スクラッチ')) { // スクラッチイベントを追加
+                        normalizedEvent = 'スクラッチ';
+                    }
+                    eventNames.add(normalizedEvent);
+                });
+            });
+
+            // カテゴリフィルターを初期化・設定
+            const sortedCategoryNames = Array.from(categoryNames).sort();
+            categoryFilter.innerHTML = '<option value="">全てのカテゴリ</option>';
+            sortedCategoryNames.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+            if (currentSelectedCategory) {
+                categoryFilter.value = currentSelectedCategory;
+            }
+
+            // 選択されたカテゴリに基づいて選手をフィルタリング
+            const athletesForAthleteFilter = allAthleteData.filter(athlete => {
+                if (!currentSelectedCategory) {
+                    return true; // カテゴリが選択されていない場合は全ての選手を表示
+                }
+                // 選手が選択されたカテゴリに属する結果を1つでも持っているかチェック
+                return athlete.results.some(result => result.class === currentSelectedCategory);
+            });
+
+            athletesForAthleteFilter.forEach(athlete => {
+                if (!uniqueAthletes[athlete.name]) {
+                    uniqueAthletes[athlete.name] = athlete.furigana;
+                }
+            });
+
+            // 選手フィルターを初期化・設定
+            const athletesForSorting = Object.keys(uniqueAthletes).map(name => ({
+                name: name,
+                furigana: uniqueAthletes[name]
+            }));
+            athletesForSorting.sort((a, b) => a.furigana.localeCompare(b.furigana, 'ja', { sensitivity: 'base' }));
+
+            athleteFilter.innerHTML = '<option value="">全ての選手</option>';
+            athletesForSorting.forEach(athlete => {
+                const option = document.createElement('option');
+                option.value = athlete.name;
+                option.textContent = athlete.name;
+                athleteFilter.appendChild(option);
+            });
+
+            // 競技フィルターを初期化・設定 (常に全ての競技を表示)
+            const sortedEventNames = Array.from(eventNames).sort((a, b) => {
+                const orderA = eventOrder.indexOf(a);
+                const orderB = eventOrder.indexOf(b);
+                if (orderA === -1 && orderB === -1) return a.localeCompare(b, 'ja'); // Both not in custom order, sort alphabetically
+                if (orderA === -1) return 1; // a not in custom order, b is, so b comes first
+                if (orderB === -1) return -1; // b not in custom order, a is, so a comes first
+                return orderA - orderB; // Both in custom order
+            });
+
+            eventFilter.innerHTML = '<option value="">全ての競技</option>';
+            sortedEventNames.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event;
+                option.textContent = event;
+                eventFilter.appendChild(option);
+            });
+        }
+
+        /**
+         * Renders athlete cards based on selected filters.
+         */
+        function renderAthleteCards() {
+            resultsContainer.innerHTML = ''; // Clear previous results
+
+            const selectedAthleteName = athleteFilter.value;
+            const selectedEvent = eventFilter.value;
+            const selectedCompetition = competitionFilter.value;
+            const selectedCategory = categoryFilter.value;
+
+            // 選手名が選択されていない場合、結果表示を非表示にし、メッセージを表示
+            if (!selectedAthleteName) {
+                resultsContainer.classList.add('hidden');
+                resultsMessage.classList.remove('hidden');
+                return;
+            }
+
+            // 選手名が選択されている場合、結果表示を表示し、メッセージを非表示
+            resultsContainer.classList.remove('hidden');
+            resultsMessage.classList.add('hidden');
+
+            // 選択された単一の選手をデータから見つける
+            const selectedAthlete = allAthleteData.find(athlete => athlete.name === selectedAthleteName);
+
+            if (!selectedAthlete) {
+                resultsContainer.innerHTML = '<p class="text-center text-keirin-text-dark col-span-full">選択された選手が見つかりませんでした。</p>';
+                return;
+            }
+
+            let displayResults = selectedAthlete.results;
+
+            // 競技名、大会名、カテゴリフィルターを適用
+            if (selectedEvent || selectedCompetition || selectedCategory) {
+                displayResults = selectedAthlete.results.filter(result => {
+                    let eventMatches;
+                    if (selectedEvent === 'ケイリン') {
+                        eventMatches = result.event.includes('ケイリン');
+                    } else if (selectedEvent === 'ポイントレース') {
+                        eventMatches = result.event.includes('ポイント決勝');
+                    } else if (selectedEvent === '500mTT') {
+                        eventMatches = result.event.includes('500mTT') || result.event.includes('500M');
+                    } else if (selectedEvent === 'スクラッチ') {
+                        eventMatches = result.event.includes('スクラッチ');
+                    }
+                    else {
+                        eventMatches = selectedEvent ? result.event === selectedEvent : true;
+                    }
+
+                    const competitionMatches = selectedCompetition ? result.competition === selectedCompetition : true;
+                    const categoryMatches = selectedCategory ? result.class === selectedCategory : true;
+                    return eventMatches && competitionMatches && categoryMatches;
+                });
+            }
+            
+            // 選択された選手カードを生成して追加
+            const athleteCard = createAthleteCard(selectedAthlete, displayResults);
+            resultsContainer.appendChild(athleteCard);
+        }
+
+        // Event Listeners for filters
+        athleteFilter.addEventListener('change', () => {
+            renderAthleteCards();
+            renderKeirinStats(athleteFilter.value); // 選手フィルターが変更されたらケイリン統計も更新
+        });
+        eventFilter.addEventListener('change', () => {
+            renderAthleteCards();
+            renderKeirinStats(athleteFilter.value); // 競技フィルターが変更されたらケイリン統計も更新
+        });
+        competitionFilter.addEventListener('change', () => {
+            renderAthleteCards();
+            renderKeirinStats(athleteFilter.value); // 大会フィルターが変更されたらケイリン統計も更新
+        });
+        categoryFilter.addEventListener('change', () => { // 新しいカテゴリフィルターのイベントリスナー
+            const currentCategory = categoryFilter.value;
+            populateFilters(currentCategory); // 選択されたカテゴリを渡して選手フィルターを更新
+            athleteFilter.value = ""; // 選手フィルターを「全ての選手」にリセット
+            renderAthleteCards();
+            renderKeirinStats(athleteFilter.value);
+        });
+
+        // Initial rendering
+        populateFilters(); // 初期表示時に全てのフィルターを読み込む
+        // 初期表示では両方のセクションを非表示にする
+        keirinStatsSection.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        keirinStatsMessage.classList.remove('hidden'); // ケイリン統計の初期メッセージを表示
+        resultsMessage.classList.remove('hidden'); // リザルトの初期メッセージを表示
+    </script>
+</body>
+</html>
