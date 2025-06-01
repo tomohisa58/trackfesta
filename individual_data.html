@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人データ検索 - 関西トラックフェスタ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --keirin-bg-light: #F8F8F8;
+            --keirin-card-bg: #FFFFFF;
+            --keirin-border: #E0E0E0;
+            --keirin-primary: #0A246A;
+            --keirin-accent: #D91E18;
+            --keirin-text-dark: #333333;
+            --keirin-text-light: #666666;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--keirin-bg-light);
+            color: var(--keirin-text-dark);
+            line-height: 1.6;
+        }
+        .nav-link:hover {
+            color: var(--keirin-accent);
+            transform: translateY(-2px);
+        }
+        .main-container {
+            background-color: var(--keirin-card-bg);
+            border: 1px solid var(--keirin-border);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-keirin-primary text-white p-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold tracking-tight">
+                関西トラックフェスタ
+            </a>
+            <nav>
+                <ul class="flex space-x-4 sm:space-x-6">
+                    <li><a href="ranking.html" class="nav-link transition duration-300 ease-in-out">ランキング</a></li>
+                    <li><a href="individual_data.html" class="nav-link transition duration-300 ease-in-out">個人データ</a></li>
+                    <li><a href="official_links.html" class="nav-link transition duration-300 ease-in-out">公式リンク</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-12 sm:py-16">
+        <div class="max-w-3xl mx-auto p-6 sm:p-8 rounded-xl shadow-xl main-container text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-keirin-primary mb-6">個人データ検索</h1>
+            <p class="text-lg text-keirin-text-dark mb-4">
+                このページは現在準備中です。選手ごとの詳細な記録や情報を今後追加予定です。
+            </p>
+            <p class="text-keirin-text-light">
+                ご不便をおかけしますが、しばらくお待ちください。
+            </p>
+            <div class="mt-8">
+                <a href="index.html" class="inline-block bg-keirin-accent text-white px-6 py-3 rounded-md font-semibold hover:bg-red-700 transition duration-300">トップページに戻る</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-keirin-primary text-white py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2025 関西トラックフェスタ. All Rights Reserved.</p>
+            <p class="mt-2">お問い合わせ: info@kansai-trackfesta.jp</p>
+        </div>
+    </footer>
+</body>
+</html>

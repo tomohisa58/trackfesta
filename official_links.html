@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公式リンク - 関西トラックフェスタ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --keirin-bg-light: #F8F8F8;
+            --keirin-card-bg: #FFFFFF;
+            --keirin-border: #E0E0E0;
+            --keirin-primary: #0A246A;
+            --keirin-accent: #D91E18;
+            --keirin-text-dark: #333333;
+            --keirin-text-light: #666666;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--keirin-bg-light);
+            color: var(--keirin-text-dark);
+            line-height: 1.6;
+        }
+        .nav-link:hover {
+            color: var(--keirin-accent);
+            transform: translateY(-2px);
+        }
+        .main-container {
+            background-color: var(--keirin-card-bg);
+            border: 1px solid var(--keirin-border);
+        }
+        .link-item {
+            background-color: var(--keirin-filter-bg);
+            border: 1px solid var(--keirin-border);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .link-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-keirin-primary text-white p-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold tracking-tight">
+                関西トラックフェスタ
+            </a>
+            <nav>
+                <ul class="flex space-x-4 sm:space-x-6">
+                    <li><a href="ranking.html" class="nav-link transition duration-300 ease-in-out">ランキング</a></li>
+                    <li><a href="individual_data.html" class="nav-link transition duration-300 ease-in-out">個人データ</a></li>
+                    <li><a href="official_links.html" class="nav-link transition duration-300 ease-in-out">公式リンク</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-12 sm:py-16">
+        <div class="max-w-3xl mx-auto p-6 sm:p-8 rounded-xl shadow-xl main-container">
+            <h1 class="text-3xl sm:text-4xl font-bold text-keirin-primary text-center mb-8">公式リンク</h1>
+            <div class="space-y-6">
+                <div class="link-item p-4 rounded-lg flex items-center justify-between">
+                    <span class="text-lg font-semibold text-keirin-primary">関西自転車競技連盟</span>
+                    <a href="https://www.google.com/search?q=関西自転車競技連盟" target="_blank" rel="noopener noreferrer" class="text-keirin-accent hover:underline">
+                        ウェブサイトへ <span class="ml-1 text-sm">&#x2192;</span>
+                    </a>
+                </div>
+                <div class="link-item p-4 rounded-lg flex items-center justify-between">
+                    <span class="text-lg font-semibold text-keirin-primary">日本自転車競技連盟 (JCF)</span>
+                    <a href="https://www.jcf.or.jp/" target="_blank" rel="noopener noreferrer" class="text-keirin-accent hover:underline">
+                        ウェブサイトへ <span class="ml-1 text-sm">&#x2192;</span>
+                    </a>
+                </div>
+                <div class="link-item p-4 rounded-lg flex items-center justify-between">
+                    <span class="text-lg font-semibold text-keirin-primary">ケイリン.jp</span>
+                    <a href="https://keirin.jp/" target="_blank" rel="noopener noreferrer" class="text-keirin-accent hover:underline">
+                        ウェブサイトへ <span class="ml-1 text-sm">&#x2192;</span>
+                    </a>
+                </div>
+                <div class="link-item p-4 rounded-lg flex items-center justify-between">
+                    <span class="text-lg font-semibold text-keirin-primary">大会公式SNS (X)</span>
+                    <a href="https://twitter.com/search?q=%E9%96%A2%E8%A5%BF%E3%83%88%E3%83%A9%E3%83%83%E3%82%AF%E3%83%95%E3%82%A7%E3%82%B9%E3%82%BF" target="_blank" rel="noopener noreferrer" class="text-keirin-accent hover:underline">
+                        Xへ <span class="ml-1 text-sm">&#x2192;</span>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <a href="index.html" class="inline-block bg-keirin-accent text-white px-6 py-3 rounded-md font-semibold hover:bg-red-700 transition duration-300">トップページに戻る</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-keirin-primary text-white py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2025 関西トラックフェスタ. All Rights Reserved.</p>
+            <p class="mt-2">お問い合わせ: info@kansai-trackfesta.jp</p>
+        </div>
+    </footer>
